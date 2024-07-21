@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using Serilog;
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using WpfUdpServerClient.Interfaces;
@@ -25,17 +26,18 @@ namespace WpfUdpServerClient.Infrastructure
         {
             if (_isRunning)
             {
-                Console.WriteLine("Server is already running.");
+                Log.Information("Server is already running.");
                 return;
             }
 
             _isRunning = true;
+            Log.Information("Server starting...");
             Task.Run(() => ListenForClients());
         }
 
         private async Task ListenForClients()
         {
-            Console.WriteLine("Server started...");
+            Log.Information("Server started and listening for clients...");
             while (_isRunning)
             {
                 try
@@ -44,23 +46,29 @@ namespace WpfUdpServerClient.Infrastructure
                     IPEndPoint remoteEP = receiveResult.RemoteEndPoint;
                     string componentName = Encoding.UTF8.GetString(receiveResult.Buffer);
 
+                    Log.Information("Received request from {RemoteEndPoint}: {ComponentName}", remoteEP, componentName);
+
                     if (_clientManager.TryAddClient(remoteEP, out var clientInfo))
                     {
                         clientInfo.LastActive = DateTime.Now;
                         string response = _handleClientRequestUseCase.HandleRequest(remoteEP, componentName, clientInfo);
                         byte[] responseBytes = Encoding.UTF8.GetBytes(response);
                         await _udpClient.SendAsync(responseBytes, responseBytes.Length, remoteEP);
+
+                        Log.Information("Response sent to {RemoteEndPoint}: {Response}", remoteEP, response);
                     }
                     else
                     {
                         string response = "Server is full. Please try again later.";
                         byte[] responseBytes = Encoding.UTF8.GetBytes(response);
                         await _udpClient.SendAsync(responseBytes, responseBytes.Length, remoteEP);
+
+                        Log.Warning("Client {RemoteEndPoint} rejected: {Response}", remoteEP, response);
                     }
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Exception: {ex.Message}");
+                    Log.Error(ex, "Exception occurred while processing request.");
                 }
             }
         }
@@ -69,6 +77,7 @@ namespace WpfUdpServerClient.Infrastructure
         {
             _isRunning = false;
             _udpClient.Close();
+            Log.Information("Server stopped.");
         }
     }
 }
