@@ -4,21 +4,14 @@ namespace WpfUdpServerClient.UseCases
 {
     public class ComponentPriceService : IComponentPriceService
     {
-        private readonly ReadOnlyDictionary<string, string> _componentsPrices;
-
-        public ComponentPriceService()
+        private readonly Dictionary<string, string> _componentsPrices = new Dictionary<string, string>()
         {
-            var componentsPrices = new Dictionary<string, string>
-            {
-                { "processor", "200 USD" },
-                { "graphics card", "500 USD" },
-                { "motherboard", "150 USD" },
-                { "ram", "80 USD" },
-                { "hard drive", "100 USD" }
-            };
-
-            _componentsPrices = new ReadOnlyDictionary<string, string>(componentsPrices);
-        }
+            { "processor", "200 USD" },
+            { "graphics card", "500 USD" },
+            { "motherboard", "150 USD" },
+            { "ram", "80 USD" },
+            { "hard drive", "100 USD" }
+        };
 
         public string GetComponentPrice(string componentName)
         {
@@ -35,6 +28,10 @@ namespace WpfUdpServerClient.UseCases
         public async Task<string> GetComponentPriceAsync(string componentName)
         {
             return await Task.Run(() => GetComponentPrice(componentName));
+        }
+        public Dictionary<string, string> GetAllPrices()
+        {
+            return _componentsPrices;
         }
     }
 }

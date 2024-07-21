@@ -18,5 +18,6 @@
         /// <param name="componentName">The name of the component.</param>
         /// <returns>A task that represents the asynchronous operation, with a string result containing the price of the component.</returns>
         Task<string> GetComponentPriceAsync(string componentName);
+        Dictionary<string, string> GetAllPrices();
     }
 }
